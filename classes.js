@@ -18,12 +18,8 @@ class Sprite {
         this.animate = animate
         this.sprites = sprites
         this.opacity = 1
-
-
         this.rotation = rotation
-
     }
-
     draw() {
         c.save()
         c.translate(
@@ -54,7 +50,6 @@ class Sprite {
                 else this.frames.val = 0
         }
     }
-
 }
 class Monster extends Sprite {
     constructor({
@@ -84,6 +79,15 @@ class Monster extends Sprite {
         this.attacks = attacks
     }
 
+    faint() {
+        document.querySelector('#dialogueBox').innerHTML = this.name + ' fainted!'
+        gsap.to(this.position, {
+            y: this.position.y + 20
+        })
+        gsap.to(this, {
+            opacity: 0
+        })
+    }
 
     attack({ attack, recipient, renderedSprites }) {
         document.querySelector('#dialogueBox').style.display = 'block'
@@ -91,10 +95,8 @@ class Monster extends Sprite {
             this.name + ' used ' + attack.name
         let healthBar = '#enemyHealthBar'
         if (this.isEnemy) healthBar = '#playerHealthBar'
-
         let rotation = 1
         if (this.isEnemy) rotation = -2.2
-
         this.health -= attack.damage
         switch (attack.name) {
             case 'Fireball':
@@ -113,78 +115,67 @@ class Monster extends Sprite {
                     animate: true,
                     rotation
                 })
-
                 renderedSprites.splice(1, 0, fireball)
                 gsap.to(fireball.position, {
-                        x: recipient.position.x,
-                        y: recipient.position.y,
+                    x: recipient.position.x,
+                    y: recipient.position.y,
+                    onComplete: () => {
+                        // Enemy actually gets hit
+                        gsap.to(healthBar, {
+                            width: this.health + '%'
+                        })
+                        gsap.to(recipient.position, {
+                            x: recipient.position.x + 10,
+                            yoyo: true,
+                            repeat: 5,
+                            duration: 0.08
+                        })
+                        gsap.to(recipient, {
+                            opacity: 0,
+                            repeat: 5,
+                            yoyo: true,
+                            duration: 0.08
+                        })
+                        renderedSprites.splice(1, 1)
+                    }
+                })
+                break
+            case 'Tackle':
+                const tl = gsap.timeline()
+                let movementDistance = 20
+                if (this.isEnemy) movementDistance = -20
+                tl.to(this.position, {
+                        x: this.position.x - movementDistance
+                    })
+                    .to(this.position, {
+                        x: this.position.x + movementDistance * 2,
+                        duration: 0.1,
                         onComplete: () => {
                             // Enemy actually gets hit
                             gsap.to(healthBar, {
                                 width: this.health + '%'
                             })
-
-                            tl.to(this.position, {
-                                    x: this.position.x - movementDistance
-                                })
-                                .to(this.position, {
-                                    x: this.position.x + movementDistance * 2,
-                                    duration: 0.1,
-                                    onComplete: () => {
-                                        // Enemy actually gets hit
-                                        gsap.to(healthBar, {
-                                            width: this.health + '%'
-                                        })
-                                        gsap.to(recipient.position, {
-                                            x: recipient.position.x + 10,
-                                            yoyo: true,
-                                            repeat: 5,
-                                            duration: 0.08
-                                        })
-
-                                        gsap.to(recipient.position, {
-                                            x: recipient.position.x + 10,
-                                            yoyo: true,
-                                            repeat: 5,
-                                            duration: 0.08
-                                        })
-                                        gsap.to(recipient, {
-                                            opacity: 0,
-                                            repeat: 5,
-                                            yoyo: true,
-                                            duration: 0.08
-                                        })
-                                        renderedSprites.splice(1, 1)
-                                    }
-                                })
-
-                            break
-                            case 'Tackle':
-                                const tl = gsap.timeline()
-
-                                gsap.to(recipient, {
-                                    opacity: 0,
-                                    repeat: 5,
-                                    yoyo: true,
-                                    duration: 0.08
-                                })
-                                gsap.to(recipient, {
-                                    opacity: 0,
-                                    repeat: 5,
-                                    yoyo: true,
-                                    duration: 0.08
-                                })
+                            gsap.to(recipient.position, {
+                                x: recipient.position.x + 10,
+                                yoyo: true,
+                                repeat: 5,
+                                duration: 0.08
+                            })
+                            gsap.to(recipient, {
+                                opacity: 0,
+                                repeat: 5,
+                                yoyo: true,
+                                duration: 0.08
+                            })
                         }
                     })
                     .to(this.position, {
                         x: this.position.x
-
                     })
                 break
         }
     }
 }
-
 class Boundary {
     static width = 48
     static height = 48
